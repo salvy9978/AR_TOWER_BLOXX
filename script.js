@@ -23,6 +23,8 @@ docReady(function () {
     td.className = "punto";
     tabla.appendChild(tr);
   }
+
+  console.log(tabla.childNodes);
 });
 
 /*eslint-disable*/
@@ -73,9 +75,9 @@ function createBox(scene, pos) {
 
 AFRAME.registerComponent("collision-detection", {
   init() {
-    console.log("init");
+    //console.log("init");
     this.el.addEventListener("collidestart", function (e) {
-      console.log(e);
+      //console.log(e);
     });
   }
 });
@@ -87,13 +89,15 @@ AFRAME.registerSystem("hit-test-system", {
   },
   init: function () {
     this.cubes = [];
-    this.cubes.push(document.querySelector("a-entity"));
+    //this.cubes.push(document.querySelector("a-entity"));
 
     this.isPlaneInPlace = false;
     this.reticle = this.data.reticle;
     this.target = this.data.target;
+
     this.el.sceneEl.addEventListener("enter-vr", (e) => {
       const session = this.el.sceneEl.renderer.xr.getSession();
+      let frame = this.el.sceneEl.frame;
       this.el.sceneEl.renderer.xr.addEventListener(
         "sessionstart",
         async (ev) => {
@@ -110,6 +114,7 @@ AFRAME.registerSystem("hit-test-system", {
           this.isPlaneInPlace = true;
           this.target.setAttribute("visible", "true");
           this.target.setAttribute("position", pos);
+
           //positionAmmoBody(this.target.body, pos);
         }
 
@@ -127,6 +132,10 @@ AFRAME.registerSystem("hit-test-system", {
     this.reticle.setAttribute("visible", "false");
     const frame = this.el.sceneEl.frame;
     if (!frame) return;
+
+    this.cubes.forEach((cube) => {
+      //console.log(cube.object3D);
+    });
 
     const viewerPose = this.el.sceneEl.renderer.xr.getCameraPose();
     if (!this.isPlaneInPlace && this.xrHitTestSource && viewerPose) {
