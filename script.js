@@ -1,5 +1,8 @@
 /* rellenar tabla de puntos */
 let pisos = 10;
+let vidas = 3;
+let pisosActuales = 0;
+let win = false;
 
 function docReady(fn) {
   // see if DOM is already available
@@ -23,8 +26,6 @@ docReady(function () {
     td.className = "punto";
     tabla.appendChild(tr);
   }
-
-  console.log(tabla.childNodes);
 });
 
 /*eslint-disable*/
@@ -133,9 +134,77 @@ AFRAME.registerSystem("hit-test-system", {
     const frame = this.el.sceneEl.frame;
     if (!frame) return;
 
+    var floorPlane = this.target.object3D.position.y;
+    var pisosCorrectos = 0;
     this.cubes.forEach((cube) => {
       //console.log(cube.object3D);
+      if (cube.object3D.position.y > floorPlane) {
+        pisosCorrectos += 1;
+        floorPlane = cube.object3D.position.y;
+      }
     });
+
+    if (pisosActuales != pisosCorrectos && pisosCorrectos <= pisos) {
+      if (pisosActuales > pisosCorrectos) {
+        for (var i = 0; i < pisos - pisosCorrectos; i++) {
+          document.querySelector("#tabla-puntos").children[
+            i
+          ].children[0].className = "punto";
+        }
+      } else {
+        for (var i = pisosActuales; i < pisosCorrectos; i++) {
+          document.querySelector("#tabla-puntos").children[
+            pisos - 1 - i
+          ].children[0].className = "puntoAzul";
+        }
+      }
+
+      pisosActuales = pisosCorrectos;
+    }
+
+    let vidasAux = vidas;
+    var fallos = this.cubes.length - pisosActuales;
+    if (fallos != 0) {
+      vidasAux = vidas - fallos;
+    }
+
+    if (vidasAux != vidas && win == false) {
+      var divVidas = document.querySelector("#div-vidas");
+      if (vidasAux <= 0 || vidas - vidasAux <= 0) {
+        divVidas.innerHTML = "";
+        var txtWin = document.createElement("strong");
+        txtWin.style.color = "red";
+        txtWin.style.fontSize = "300%";
+        txtWin.position = "float: right;";
+        const textNode = document.createTextNode("LOSE :(");
+        txtWin.appendChild(textNode);
+        divVidas.append(txtWin);
+        for (var i = 0; i < pisos; i++) {
+          document.querySelector("#tabla-puntos").children[
+            i
+          ].children[0].className = "punto";
+        }
+      } else {
+        for (var i = 0; i < vidas - vidasAux; i++) {
+          divVidas.removeChild(divVidas.firstElementChild);
+        }
+      }
+      vidas = vidasAux;
+    }
+
+    if (pisosActuales >= pisos && vidas > 0) {
+      //console.log("Win");
+      win = true;
+      var divVidas = document.querySelector("#div-vidas");
+      divVidas.innerHTML = "";
+      var txtWin = document.createElement("strong");
+      txtWin.style.color = "gold";
+      txtWin.style.fontSize = "300%";
+      txtWin.position = "float: right;";
+      const textNode = document.createTextNode("WIN!!!");
+      txtWin.appendChild(textNode);
+      divVidas.append(txtWin);
+    }
 
     const viewerPose = this.el.sceneEl.renderer.xr.getCameraPose();
     if (!this.isPlaneInPlace && this.xrHitTestSource && viewerPose) {

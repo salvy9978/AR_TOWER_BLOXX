@@ -27,3 +27,10 @@
   width: 15px;
   height: 15px;
 }
+
+.puntoAzul {
+  border: 1px solid black;
+  background-color: teal;
+  width: 15px;
+  height: 15px;
+}
