@@ -3,7 +3,7 @@ let pisos = 10;
 let vidas = 3;
 let pisosActuales = 0;
 let win = false;
-let startTime = 0;
+let isPlaneInPlaceGlobal = false;
 
 /* rellenar tabla de puntos */
 function docReady(fn) {
@@ -52,7 +52,7 @@ function createBox(scene, pos) {
   const box = document.createElement("a-entity");
   box.setAttribute("gltf-model", "#piso");
   box.setAttribute("ammo-body", "type: dynamic; emitCollisionEvents: true;");
-  console.log(pisosActuales);
+
   box.setAttribute(
     "position",
     `${pos.x} ${pos.y + 0.08 + pisosActuales * 0.2} ${pos.z}`
@@ -80,6 +80,21 @@ function createBox(scene, pos) {
   return box;
 }
 
+function createFloatingBox(scene, pos) {
+  const box = document.createElement("a-entity");
+  box.setAttribute("gltf-model", "#piso");
+  box.setAttribute(
+    "position",
+    `${pos.x} ${pos.y + 0.08 + pisosActuales * 0.2} ${pos.z}`
+  );
+  box.setAttribute("scale", "0.1 0.1 0.1");
+  box.setAttribute("id", "boxMoving");
+  box.setAttribute("movable", "speed: 0.2");
+  scene.appendChild(box);
+
+  return box;
+}
+
 AFRAME.registerComponent("collision-detection", {
   init() {
     //console.log("init");
@@ -96,6 +111,7 @@ AFRAME.registerSystem("hit-test-system", {
   },
   init: function () {
     this.cubes = [];
+    this.startTime = 0;
     //this.cubes.push(document.querySelector("a-entity"));
 
     this.isPlaneInPlace = false;
@@ -120,9 +136,10 @@ AFRAME.registerSystem("hit-test-system", {
         const pos = this.reticle.getAttribute("position");
         if (this.reticle.getAttribute("visible") && !this.isPlaneInPlace) {
           this.isPlaneInPlace = true;
+          isPlaneInPlaceGlobal = true;
           this.target.setAttribute("visible", "true");
           this.target.setAttribute("position", pos);
-
+          createFloatingBox(this.el.sceneEl, pos);
           //positionAmmoBody(this.target.body, pos);
         }
 
@@ -157,7 +174,7 @@ AFRAME.registerSystem("hit-test-system", {
     floorPlane = this.target.object3D.position.y;
     var max = 0;
 
-    if (time - startTime > 500) {
+    if (time - this.startTime > 500) {
       this.cubes.forEach((cube) => {
         //console.log(cube.object3D);
         if (cube.object3D.position.y - floorPlane > max) {
@@ -170,7 +187,7 @@ AFRAME.registerSystem("hit-test-system", {
         pisosCorrectos = pisosActuales + 1;
       }
 
-      startTime = time;
+      this.startTime = time;
 
       if (pisosActuales != pisosCorrectos && pisosCorrectos <= pisos) {
         if (pisosActuales > pisosCorrectos) {
@@ -261,5 +278,42 @@ AFRAME.registerComponent("ammo-restitution", {
     el.addEventListener("body-loaded", function () {
       el.body.setRestitution(restitution);
     });
+  }
+});
+
+AFRAME.registerComponent("movable", {
+  schema: {
+    speed: { type: "number", default: 0.1 }
+  },
+  init() {
+    this.t = 0;
+    this.direction = 1;
+    this.then = 0;
+    this.positioned = false;
+  },
+
+  tick(now) {
+    /*
+    if (isPlaneInPlaceGlobal && !this.positioned) {
+      var target = document.querySelector("#plane");
+      ["x", "y", "z"].forEach((axis) => {
+        this.el.object3D.position[axis] = target.object3D.position[axis];
+      });
+      this.el.object3D.position.x = this.el.object3D.position.x - 0.1;
+      this.positioned = true;
+    }*/
+
+    let delta = (now - this.then) / 1000;
+
+    this.t += this.data.speed * this.direction * delta;
+
+    this.then = now;
+    if (this.t >= 0.25) {
+      this.direction = -1;
+    } else if (this.t <= -0.25) {
+      this.direction = 1;
+    }
+
+    this.el.object3D.position.x = this.t;
   }
 });
