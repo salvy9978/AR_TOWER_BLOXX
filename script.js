@@ -1,9 +1,11 @@
-/* rellenar tabla de puntos */
+//Variables globales
 let pisos = 10;
 let vidas = 3;
 let pisosActuales = 0;
 let win = false;
+let startTime = 0;
 
+/* rellenar tabla de puntos */
 function docReady(fn) {
   // see if DOM is already available
   if (
@@ -50,7 +52,11 @@ function createBox(scene, pos) {
   const box = document.createElement("a-entity");
   box.setAttribute("gltf-model", "#piso");
   box.setAttribute("ammo-body", "type: dynamic; emitCollisionEvents: true;");
-  box.setAttribute("position", `${pos.x} ${pos.y + 1.6} ${pos.z}`);
+  console.log(pisosActuales);
+  box.setAttribute(
+    "position",
+    `${pos.x} ${pos.y + 0.08 + pisosActuales * 0.2} ${pos.z}`
+  );
   box.setAttribute("scale", "0.1 0.1 0.1");
   box.setAttribute(
     "ammo-shape",
@@ -109,6 +115,7 @@ AFRAME.registerSystem("hit-test-system", {
           });
         }
       );
+
       session.addEventListener("select", (e) => {
         const pos = this.reticle.getAttribute("position");
         if (this.reticle.getAttribute("visible") && !this.isPlaneInPlace) {
@@ -129,13 +136,15 @@ AFRAME.registerSystem("hit-test-system", {
     });
   },
 
-  tick: function (t) {
+  tick: function (time, timeDelta) {
     this.reticle.setAttribute("visible", "false");
     const frame = this.el.sceneEl.frame;
     if (!frame) return;
 
     var floorPlane = this.target.object3D.position.y;
-    var pisosCorrectos = 0;
+    var pisosCorrectos = pisosActuales;
+    //Primera funcion hallar altura
+    /*
     this.cubes.forEach((cube) => {
       //console.log(cube.object3D);
       if (cube.object3D.position.y > floorPlane) {
@@ -143,69 +152,89 @@ AFRAME.registerSystem("hit-test-system", {
         floorPlane = cube.object3D.position.y;
       }
     });
+    */
+    //Segunda funcion hallar altura
+    floorPlane = this.target.object3D.position.y;
+    var max = 0;
 
-    if (pisosActuales != pisosCorrectos && pisosCorrectos <= pisos) {
-      if (pisosActuales > pisosCorrectos) {
-        for (var i = 0; i < pisos - pisosCorrectos; i++) {
-          document.querySelector("#tabla-puntos").children[
-            i
-          ].children[0].className = "punto";
+    if (time - startTime > 500) {
+      this.cubes.forEach((cube) => {
+        //console.log(cube.object3D);
+        if (cube.object3D.position.y - floorPlane > max) {
+          max = cube.object3D.position.y - floorPlane;
         }
-      } else {
-        for (var i = pisosActuales; i < pisosCorrectos; i++) {
-          document.querySelector("#tabla-puntos").children[
-            pisos - 1 - i
-          ].children[0].className = "puntoAzul";
-        }
+      });
+
+      pisosCorrectos = Math.ceil(max / 0.2);
+      if (pisosCorrectos > pisosActuales) {
+        pisosCorrectos = pisosActuales + 1;
       }
 
-      pisosActuales = pisosCorrectos;
-    }
+      startTime = time;
 
-    let vidasAux = vidas;
-    var fallos = this.cubes.length - pisosActuales;
-    if (fallos != 0) {
-      vidasAux = vidas - fallos;
-    }
+      if (pisosActuales != pisosCorrectos && pisosCorrectos <= pisos) {
+        if (pisosActuales > pisosCorrectos) {
+          for (var i = 0; i < pisos - pisosCorrectos; i++) {
+            document.querySelector("#tabla-puntos").children[
+              i
+            ].children[0].className = "punto";
+          }
+        } else {
+          for (var i = pisosActuales; i < pisosCorrectos; i++) {
+            document.querySelector("#tabla-puntos").children[
+              pisos - 1 - i
+            ].children[0].className = "puntoAzul";
+          }
+        }
 
-    if (vidasAux != vidas && win == false) {
-      var divVidas = document.querySelector("#div-vidas");
-      if (vidasAux <= 0 || vidas - vidasAux <= 0) {
-        divVidas.innerHTML = "";
-        var txtWin = document.createElement("strong");
-        txtWin.style.color = "red";
-        txtWin.style.fontSize = "300%";
-        txtWin.position = "float: right;";
-        const textNode = document.createTextNode("LOSE :(");
-        txtWin.appendChild(textNode);
-        divVidas.append(txtWin);
+        pisosActuales = pisosCorrectos;
+      }
+
+      let vidasAux = vidas;
+      var fallos = this.cubes.length - pisosActuales;
+      if (fallos != 0) {
+        vidasAux = vidas - fallos;
+      }
+
+      if (vidasAux != vidas && win == false) {
+        var divVidas = document.querySelector("#div-vidas");
+        if (vidasAux <= 0 || vidas - vidasAux <= 0) {
+          divVidas.innerHTML = "";
+          var txtWin = document.createElement("strong");
+          txtWin.style.color = "red";
+          txtWin.style.fontSize = "300%";
+          txtWin.position = "float: right;";
+          const textNode = document.createTextNode("LOSE :(");
+          txtWin.appendChild(textNode);
+          divVidas.append(txtWin);
+          /*
         for (var i = 0; i < pisos; i++) {
           document.querySelector("#tabla-puntos").children[
             i
           ].children[0].className = "punto";
+        }*/
+        } else {
+          for (var i = 0; i < vidas - vidasAux; i++) {
+            divVidas.removeChild(divVidas.firstElementChild);
+          }
         }
-      } else {
-        for (var i = 0; i < vidas - vidasAux; i++) {
-          divVidas.removeChild(divVidas.firstElementChild);
-        }
+        vidas = vidasAux;
       }
-      vidas = vidasAux;
-    }
 
-    if (pisosActuales >= pisos && vidas > 0) {
-      //console.log("Win");
-      win = true;
-      var divVidas = document.querySelector("#div-vidas");
-      divVidas.innerHTML = "";
-      var txtWin = document.createElement("strong");
-      txtWin.style.color = "gold";
-      txtWin.style.fontSize = "300%";
-      txtWin.position = "float: right;";
-      const textNode = document.createTextNode("WIN!!!");
-      txtWin.appendChild(textNode);
-      divVidas.append(txtWin);
+      if (pisosActuales >= pisos && vidas > 0) {
+        //console.log("Win");
+        win = true;
+        var divVidas = document.querySelector("#div-vidas");
+        divVidas.innerHTML = "";
+        var txtWin = document.createElement("strong");
+        txtWin.style.color = "gold";
+        txtWin.style.fontSize = "300%";
+        txtWin.position = "float: right;";
+        const textNode = document.createTextNode("WIN!!!");
+        txtWin.appendChild(textNode);
+        divVidas.append(txtWin);
+      }
     }
-
     const viewerPose = this.el.sceneEl.renderer.xr.getCameraPose();
     if (!this.isPlaneInPlace && this.xrHitTestSource && viewerPose) {
       const hitTestResults = frame.getHitTestResults(this.xrHitTestSource);
