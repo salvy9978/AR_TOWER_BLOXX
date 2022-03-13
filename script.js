@@ -1,6 +1,7 @@
 //Variables globales
 let pisos = 10;
 let vidas = 3;
+let vidasTotales = vidas;
 let pisosActuales = 0;
 let win = false;
 let isPlaneInPlaceGlobal = false;
@@ -53,10 +54,7 @@ function createBox(scene, pos) {
   box.setAttribute("gltf-model", "#piso");
   box.setAttribute("ammo-body", "type: dynamic; emitCollisionEvents: true;");
 
-  box.setAttribute(
-    "position",
-    `${pos.x} ${pos.y + 0.08 + pisosActuales * 0.2} ${pos.z}`
-  );
+  box.setAttribute("position", `${pos.x} ${pos.y} ${pos.z}`);
   box.setAttribute("scale", "0.1 0.1 0.1");
   box.setAttribute(
     "ammo-shape",
@@ -76,21 +74,6 @@ function createBox(scene, pos) {
     box.body.setLinearVelocity(velocity);
     Ammo.destroy(velocity);
   });
-
-  return box;
-}
-
-function createFloatingBox(scene, pos) {
-  const box = document.createElement("a-entity");
-  box.setAttribute("gltf-model", "#piso");
-  box.setAttribute(
-    "position",
-    `${pos.x} ${pos.y + 0.08 + pisosActuales * 0.2} ${pos.z}`
-  );
-  box.setAttribute("scale", "0.1 0.1 0.1");
-  box.setAttribute("id", "boxMoving");
-  box.setAttribute("movable", "speed: 0.2");
-  scene.appendChild(box);
 
   return box;
 }
@@ -139,7 +122,7 @@ AFRAME.registerSystem("hit-test-system", {
           isPlaneInPlaceGlobal = true;
           this.target.setAttribute("visible", "true");
           this.target.setAttribute("position", pos);
-          createFloatingBox(this.el.sceneEl, pos);
+
           //positionAmmoBody(this.target.body, pos);
         }
 
@@ -147,7 +130,15 @@ AFRAME.registerSystem("hit-test-system", {
           this.cubes.forEach((cube) =>
             cube.components["ammo-body"].syncToPhysics()
           );
-          this.cubes.push(createBox(this.el.sceneEl, pos));
+
+          if (pisosActuales == 0) {
+            this.cubes.push(createBox(this.el.sceneEl, pos));
+          } else {
+            var boxMoving = document.querySelector("#boxMoving");
+            this.cubes.push(
+              createBox(this.el.sceneEl, boxMoving.object3D.position)
+            );
+          }
         }
       });
     });
@@ -171,10 +162,12 @@ AFRAME.registerSystem("hit-test-system", {
     });
     */
     //Segunda funcion hallar altura
+
     floorPlane = this.target.object3D.position.y;
     var max = 0;
 
     if (time - this.startTime > 500) {
+      /*
       this.cubes.forEach((cube) => {
         //console.log(cube.object3D);
         if (cube.object3D.position.y - floorPlane > max) {
@@ -185,7 +178,25 @@ AFRAME.registerSystem("hit-test-system", {
       pisosCorrectos = Math.ceil(max / 0.2);
       if (pisosCorrectos > pisosActuales) {
         pisosCorrectos = pisosActuales + 1;
-      }
+      }*/
+      //Tercera funcion hallar altura
+      floorPlane = 0;
+      pisosCorrectos = 0;
+      var first = true;
+
+      this.cubes.forEach((cube) => {
+        //console.log(cube.object3D);
+        if (first) {
+          floorPlane = cube.object3D.position.y;
+          pisosCorrectos += 1;
+          first = false;
+        } else {
+          if (cube.object3D.position.y - floorPlane > 0.1) {
+            pisosCorrectos += 1;
+            floorPlane = cube.object3D.position.y;
+          }
+        }
+      });
 
       this.startTime = time;
 
@@ -209,8 +220,9 @@ AFRAME.registerSystem("hit-test-system", {
 
       let vidasAux = vidas;
       var fallos = this.cubes.length - pisosActuales;
+
       if (fallos != 0) {
-        vidasAux = vidas - fallos;
+        vidasAux = vidasTotales - fallos;
       }
 
       if (vidasAux != vidas && win == false) {
@@ -290,30 +302,34 @@ AFRAME.registerComponent("movable", {
     this.direction = 1;
     this.then = 0;
     this.positioned = false;
+    this.centerPlaneX = 0;
+    this.centerPlaneY = 0;
   },
 
   tick(now) {
-    /*
     if (isPlaneInPlaceGlobal && !this.positioned) {
       var target = document.querySelector("#plane");
       ["x", "y", "z"].forEach((axis) => {
         this.el.object3D.position[axis] = target.object3D.position[axis];
       });
-      this.el.object3D.position.x = this.el.object3D.position.x - 0.1;
+      this.centerPlaneX = target.object3D.position.x;
+      this.centerPlaneY = target.object3D.position.y;
       this.positioned = true;
-    }*/
+    }
 
     let delta = (now - this.then) / 1000;
 
     this.t += this.data.speed * this.direction * delta;
 
     this.then = now;
-    if (this.t >= 0.25) {
+    if (this.t >= 0.3) {
       this.direction = -1;
-    } else if (this.t <= -0.25) {
+    } else if (this.t <= -0.3) {
       this.direction = 1;
     }
 
-    this.el.object3D.position.x = this.t;
+    this.el.object3D.position.x = this.centerPlaneX + this.t;
+    this.el.object3D.position.y =
+      this.centerPlaneY + 0.12 + pisosActuales * 0.2;
   }
 });
