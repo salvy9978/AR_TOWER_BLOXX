@@ -93,6 +93,21 @@ AFRAME.registerSystem("hit-test-system", {
     target: { type: "selector" }
   },
   init: function () {
+    //Levels
+    const dropdownContent = document.querySelector(".dropdown-content");
+    const select = document.querySelector("#select");
+    dropdownContent.addEventListener("beforexrselect", (e) => {
+      e.preventDefault();
+    });
+
+    dropdownContent.addEventListener("click", (e) => {
+      if (e.target.tagName.toLowerCase() !== "p") return;
+
+      const txt = e.target.textContent;
+      console.log(txt);
+    });
+
+    //Cubes
     this.cubes = [];
     this.startTime = 0;
     //this.cubes.push(document.querySelector("a-entity"));
