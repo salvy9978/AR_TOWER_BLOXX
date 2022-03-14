@@ -83,6 +83,8 @@ AFRAME.registerComponent("collision-detection", {
     //console.log("init");
     this.el.addEventListener("collidestart", function (e) {
       //console.log(e);
+      var audio = new Audio("/resources/sounds/flat.mp3");
+      audio.play();
     });
   }
 });
@@ -103,6 +105,8 @@ AFRAME.registerSystem("hit-test-system", {
     dropdownContent.addEventListener("click", (e) => {
       if (e.target.tagName.toLowerCase() !== "p") return;
 
+      var audio = new Audio("/resources/sounds/point.wav");
+      audio.play();
       const txt = e.target.textContent;
 
       switch (txt) {
@@ -156,6 +160,8 @@ AFRAME.registerSystem("hit-test-system", {
     });
 
     select.addEventListener("beforexrselect", (e) => {
+      var audio = new Audio("/resources/sounds/point.wav");
+      audio.play();
       e.preventDefault();
     });
 
@@ -297,13 +303,15 @@ AFRAME.registerSystem("hit-test-system", {
         var divVidas = document.querySelector("#div-vidas");
         if (vidasAux <= 0 || vidas - vidasAux <= 0) {
           divVidas.innerHTML = "";
-          var txtWin = document.createElement("strong");
-          txtWin.style.color = "red";
-          txtWin.style.fontSize = "300%";
-          txtWin.position = "float: right;";
+          var txtLose = document.createElement("strong");
+          txtLose.style.color = "red";
+          txtLose.style.fontSize = "300%";
+          txtLose.position = "float: right;";
           const textNode = document.createTextNode("LOSE :(");
-          txtWin.appendChild(textNode);
-          divVidas.append(txtWin);
+          txtLose.appendChild(textNode);
+          divVidas.append(txtLose);
+          var audio = new Audio("/resources/sounds/lose.wav");
+          audio.play();
           /*
         for (var i = 0; i < pisos; i++) {
           document.querySelector("#tabla-puntos").children[
@@ -321,6 +329,11 @@ AFRAME.registerSystem("hit-test-system", {
       }
 
       if (pisosActuales >= pisos && vidas > 0) {
+        if (!win) {
+          var audio = new Audio("/resources/sounds/win.wav");
+          audio.play();
+        }
+
         //console.log("Win");
         win = true;
         var divVidas = document.querySelector("#div-vidas");
