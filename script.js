@@ -1,5 +1,5 @@
 //Variables globales
-let pisos = 10;
+let pisos = 9;
 let vidas = 3;
 let vidasTotales = vidas;
 let pisosActuales = 0;
@@ -104,7 +104,55 @@ AFRAME.registerSystem("hit-test-system", {
       if (e.target.tagName.toLowerCase() !== "p") return;
 
       const txt = e.target.textContent;
-      console.log(txt);
+
+      switch (txt) {
+        case "Easy":
+          //reset and set
+          pisos = 3;
+
+          break;
+        case "Medium":
+          //reset and set
+          pisos = 6;
+
+          break;
+        case "Hard":
+          //reset and set
+          pisos = 9;
+
+          break;
+        default:
+      }
+      //colocar puntos
+      win = false;
+      pisosActuales = 0;
+      vidas = vidasTotales;
+      var tabla = document.querySelector("#tabla-puntos");
+      tabla.innerHTML = "";
+      for (var i = 0; i < pisos; i++) {
+        var tr = document.createElement("tr");
+        var td = tr.appendChild(document.createElement("td"));
+        td.className = "punto";
+        tabla.appendChild(tr);
+      }
+      //colocar vidas
+      var divVidas = document.querySelector("#div-vidas");
+      divVidas.innerHTML = "";
+
+      for (var i = 0; i < vidas; i++) {
+        var imgVida = document.createElement("img");
+        imgVida.setAttribute("src", "/resources/images/vida.png");
+        imgVida.setAttribute("class", "foto-vida");
+        divVidas.append(imgVida);
+      }
+
+      //reset cubes
+      this.cubes.forEach((cube) => cube.remove());
+      this.cubes = [];
+      if (this.isPlaneInPlace) {
+        const pos = this.target.getAttribute("position");
+        this.cubes.push(createBox(this.el.sceneEl, pos));
+      }
     });
 
     //Cubes
@@ -259,7 +307,9 @@ AFRAME.registerSystem("hit-test-system", {
         }*/
         } else {
           for (var i = 0; i < vidas - vidasAux; i++) {
-            divVidas.removeChild(divVidas.firstElementChild);
+            if (divVidas.childElementCount > 0) {
+              divVidas.removeChild(divVidas.firstElementChild);
+            }
           }
         }
         vidas = vidasAux;
