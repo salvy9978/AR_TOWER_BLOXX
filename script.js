@@ -155,6 +155,10 @@ AFRAME.registerSystem("hit-test-system", {
       }
     });
 
+    select.addEventListener("beforexrselect", (e) => {
+      e.preventDefault();
+    });
+
     //Cubes
     this.cubes = [];
     this.startTime = 0;
@@ -179,6 +183,7 @@ AFRAME.registerSystem("hit-test-system", {
       );
 
       session.addEventListener("select", (e) => {
+        //console.log(e);
         const pos = this.reticle.getAttribute("position");
         if (this.reticle.getAttribute("visible") && !this.isPlaneInPlace) {
           this.isPlaneInPlace = true;
